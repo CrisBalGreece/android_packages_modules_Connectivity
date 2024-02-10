@@ -17,7 +17,7 @@
 #define LOG_TAG "NetdUpdatable"
 
 #include "BpfHandler.h"
-
+#include <cutils/properties.h>
 #include <android-base/logging.h>
 #include <netdutils/Status.h>
 
@@ -30,11 +30,16 @@ int libnetd_updatable_init(const char* cg2_path) {
     LOG(INFO) << __func__ << ": Initializing";
 
     android::netdutils::Status ret = sBpfHandler.init(cg2_path);
-    if (!android::netdutils::isOk(ret)) {
-        LOG(ERROR) << __func__ << ": BPF handler init failed";
-        return -ret.code();
-    }
-    return 0;
+    char value[PROP_VALUE_MAX] = "";
+    bool ebpf_supported = __system_property_get("ro.kernel.ebpf.supported", value) == 0 || strcmp(value, "false") != 0;
+    if (ebpf_supported) {
+        android::netdutils::Status ret = android::net::gNetdUpdatable->mBpfHandler.init(cg2_path);
+        if (!android::netdutils::isOk(ret)) {
+            LOG(ERROR) << __func__ << ": BPF handler init failed";
+            return -ret.code();
+        }
+     }
+     return 0;
 }
 
 int libnetd_updatable_tagSocket(int sockFd, uint32_t tag, uid_t chargeUid, uid_t realUid) {

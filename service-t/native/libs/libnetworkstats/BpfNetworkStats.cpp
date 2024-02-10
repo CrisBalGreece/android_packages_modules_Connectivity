@@ -90,9 +90,7 @@ int bpfGetIfaceStatsInternal(const char* iface, Stats* stats,
 }
 
 int bpfGetIfaceStats(const char* iface, Stats* stats) {
-    static BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
-    static BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
-    return bpfGetIfaceStatsInternal(iface, stats, ifaceStatsMap, ifaceIndexNameMap);
+    return -ENOENT;
 }
 
 stats_line populateStatsEntry(const StatsKey& statsKey, const StatsValue& statsEntry,

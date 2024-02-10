@@ -42,6 +42,7 @@ import android.content.Context;
 import android.net.INetd;
 import android.os.RemoteException;
 import android.os.ServiceSpecificException;
+import android.os.SystemProperties;
 import android.provider.DeviceConfig;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -89,6 +90,7 @@ public class BpfNetMaps {
     private final INetd mNetd;
     private final Dependencies mDeps;
     // Use legacy netd for releases before T.
+    private static final boolean USE_EBPF = SystemProperties.getBoolean("ro.kernel.ebpf.supported", true);
     private static boolean sInitialized = false;
 
     private static Boolean sEnableJavaBpfMap = null;
@@ -408,7 +410,11 @@ public class BpfNetMaps {
 
     private void maybeThrow(final int err, final String msg) {
         if (err != 0) {
-            throw new ServiceSpecificException(err, msg + ": " + Os.strerror(err));
+            if (USE_EBPF) {
+                throw new ServiceSpecificException(err, msg + ": " + Os.strerror(err));
+            } else {
+                Log.e(TAG, msg + ": " + Os.strerror(-err));
+            }
         }
     }
 
